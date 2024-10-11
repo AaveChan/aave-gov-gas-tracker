@@ -32,8 +32,6 @@ export const generateReport = (
     report += `${reportTable}\n\n`;
   }
 
-  console.log(report);
-
   const dirPath = "./out/reports";
   const filename = "gas-report.md";
 
