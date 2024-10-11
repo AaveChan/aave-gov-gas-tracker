@@ -3,13 +3,14 @@ import { etherscanProvider } from "./clients/ethers-client";
 import { Address } from "viem";
 import { delegatePlatforms } from "./configs/config";
 import { requireEnv } from "./utils/requires";
+import { generateReport } from "./services/report";
 
 type AddressGasInfo = {
   address: Address;
   gasUsed: bigint;
 };
 
-type DelegatePlatformFees = {
+export type DelegatePlatformFees = {
   name: string;
   addresses: AddressGasInfo[];
 };
@@ -35,6 +36,8 @@ const trackAddressesGas = async () => {
       });
     }
   }
+
+  generateReport(delegatePlatformsWithFees);
 };
 
 /**

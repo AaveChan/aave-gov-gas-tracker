@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "track-gas": "tsx src/gas-tracker"
+    "gas-tracker": "tsx src/gas-tracker"
   },
   "description": "gas tracker script for aave delegate platforms",
   "main": "index.js",
