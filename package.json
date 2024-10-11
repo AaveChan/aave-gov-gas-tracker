@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "generate": "tsx src/generator",
-    "get-timelocks": "tsx src/get-timelocks"
+    "gas-tracker": "tsx src/gas-tracker"
   },
   "description": "caps calldata generator for the aave protocol",
   "main": "index.js",
