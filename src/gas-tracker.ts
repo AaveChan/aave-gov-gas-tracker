@@ -48,8 +48,8 @@ const trackAddressesGas = async () => {
 const getAllGasUsed = async (address: Address) => {
   const history = await etherscanProvider.getHistory(
     address,
-    20936070,
-    20942810
+    process.env.START_BLOCK,
+    process.env.END_BLOCK
   );
   const totalGasUsed = history.reduce(
     (acc, curr) => acc + BigInt(curr.gasUsed) * BigInt(curr.gasPrice),
