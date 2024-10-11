@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "gas-tracker": "tsx src/gas-tracker"
+    "track-gas": "tsx src/gas-tracker"
   },
-  "description": "caps calldata generator for the aave protocol",
+  "description": "gas tracker script for aave delegate platforms",
   "main": "index.js",
   "author": "ACI",
   "license": "MIT",
