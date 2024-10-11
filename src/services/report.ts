@@ -6,7 +6,10 @@ import { formatEther } from "viem";
 export const generateReport = (
   delegatePlatformsFees: DelegatePlatformFees[]
 ) => {
-  let report = `# Delegate Platform Gas Report\n\n`;
+  const startBlock = process.env.START_BLOCK;
+  const endBlock = process.env.END_BLOCK;
+  let report = `# Delegate Platforms Gas Report\n\n`;
+  report += `### 🏁 From [${startBlock}](https://etherscan.io/block/${startBlock}) to [${endBlock}](https://etherscan.io/block/${endBlock})\n\n`;
 
   for (const delegatePlatformFees of delegatePlatformsFees) {
     const reportTable = markdownTable([
@@ -15,6 +18,15 @@ export const generateReport = (
         addressGasInfo.address,
         formatEther(addressGasInfo.gasUsed),
       ]),
+      [
+        "**Total**",
+        `**${formatEther(
+          delegatePlatformFees.addresses.reduce(
+            (acc, curr) => acc + curr.gasUsed,
+            0n
+          )
+        )}**`,
+      ],
     ]);
     report += `## ${delegatePlatformFees.name}\n\n`;
     report += `${reportTable}\n\n`;
