@@ -34,10 +34,11 @@ export const generateReport = (
 
   const dirPath = "./out/reports";
   const filename = "gas-report.md";
+  const path = `${dirPath}/${filename}`;
 
   if (!fs.existsSync(dirPath)) {
     fs.mkdirSync(dirPath, { recursive: true });
   }
-  fs.writeFileSync(`${dirPath}/${filename}`, report);
-  console.log(`✅ Report generated at ${filename}`);
+  fs.writeFileSync(path, report);
+  console.log(`✅ Report generated at ${path}`);
 };
