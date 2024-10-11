@@ -1,0 +1,28 @@
+{
+  "name": "aave-caps-generator",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "generate": "tsx src/generator",
+    "get-timelocks": "tsx src/get-timelocks"
+  },
+  "description": "caps calldata generator for the aave protocol",
+  "main": "index.js",
+  "author": "ACI",
+  "license": "MIT",
+  "dependencies": {
+    "@bgd-labs/aave-address-book": "^4.0.0",
+    "dotenv": "^16.4.5",
+    "markdown-table": "^3.0.3",
+    "tsx": "^4.19.1",
+    "viem": "^2.21.18"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.11.1",
+    "@types/node": "^22.7.5",
+    "eslint": "^9.12.0",
+    "globals": "^15.10.0",
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^8.8.1"
+  }
+}
