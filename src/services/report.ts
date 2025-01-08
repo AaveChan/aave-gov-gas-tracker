@@ -13,16 +13,25 @@ export const generateReport = (
 
   for (const delegatePlatformFees of delegatePlatformsFees) {
     const reportTable = markdownTable([
-      ["Address", "Gas Used (ETH)"],
+      [
+        "Address",
+        "Gas Used (ETH)",
+        "Cancellation Fees Used (ETH)",
+        "**Total (ETH)**",
+      ],
       ...delegatePlatformFees.addresses.map((addressGasInfo) => [
         addressGasInfo.address,
         formatEther(addressGasInfo.gasUsed),
+        formatEther(addressGasInfo.cancellationFeesUsed),
+        `**${formatEther(
+          addressGasInfo.gasUsed + addressGasInfo.cancellationFeesUsed
+        )}**`,
       ]),
       [
         "**Total**",
         `**${formatEther(
           delegatePlatformFees.addresses.reduce(
-            (acc, curr) => acc + curr.gasUsed,
+            (acc, cur) => acc + cur.gasUsed + cur.cancellationFeesUsed,
             0n
           )
         )}**`,

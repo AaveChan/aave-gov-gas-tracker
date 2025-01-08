@@ -69,3 +69,5 @@ export const getViemClient = (chain: Chain) => {
     });
   }
 };
+
+export type ViemClient = ReturnType<typeof getViemClient>;
