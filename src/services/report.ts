@@ -1,43 +1,50 @@
 import { markdownTable } from "markdown-table";
 import fs from "fs";
-import { DelegatePlatformFees } from "@/gas-tracker";
+import {
+  AllDelegatePlatformsFees,
+  FeesTypes,
+  feesTypesNames,
+} from "@/gas-tracker";
 import { formatEther } from "viem";
 
 export const generateReport = (
-  delegatePlatformsFees: DelegatePlatformFees[]
+  delegatePlatformsFees: AllDelegatePlatformsFees
 ) => {
   const startBlock = process.env.START_BLOCK;
   const endBlock = process.env.END_BLOCK;
   let report = `# Delegate Platforms Gas Report\n\n`;
   report += `### 🏁 From [${startBlock}](https://etherscan.io/block/${startBlock}) to [${endBlock}](https://etherscan.io/block/${endBlock})\n\n`;
 
-  for (const delegatePlatformFees of delegatePlatformsFees) {
+  for (const [
+    delegatePlatformName,
+    delegatePlatformFees,
+  ] of delegatePlatformsFees) {
     const reportTable = markdownTable([
       [
         "Address",
-        "Gas Used (ETH)",
-        "Cancellation Fees Used (ETH)",
+        ...Object.values(FeesTypes).map((feetype) => feesTypesNames[feetype]),
         "**Total (ETH)**",
       ],
-      ...delegatePlatformFees.addresses.map((addressGasInfo) => [
-        addressGasInfo.address,
-        formatEther(addressGasInfo.gasUsed),
-        formatEther(addressGasInfo.cancellationFeesUsed),
-        `**${formatEther(
-          addressGasInfo.gasUsed + addressGasInfo.cancellationFeesUsed
-        )}**`,
-      ]),
+      ...Array.from(delegatePlatformFees.addressesFees).map(
+        ([address, feesInfos]) => [
+          address,
+          ...Object.entries(feesInfos.fees).map(([, value]) => {
+            return `${formatEther(value)}`;
+          }),
+          `**${formatEther(feesInfos.totalFees)}**`,
+        ]
+      ),
       [
         "**Total**",
-        `**${formatEther(
-          delegatePlatformFees.addresses.reduce(
-            (acc, cur) => acc + cur.gasUsed + cur.cancellationFeesUsed,
-            0n
-          )
-        )}**`,
+        ...Object.entries(delegatePlatformFees.totalFeesInfos.fees).map(
+          ([, value]) => {
+            return `**${formatEther(value)}**`;
+          }
+        ),
+        `**${formatEther(delegatePlatformFees.totalFeesInfos.totalFees)}**`,
       ],
     ]);
-    report += `## ${delegatePlatformFees.name}\n\n`;
+    report += `## ${delegatePlatformName}\n\n`;
     report += `${reportTable}\n\n`;
   }
 

@@ -10,16 +10,31 @@ import { fetchEventsInBatches } from "./utils/events";
 import { GovernanceV3Ethereum } from "@bgd-labs/aave-address-book";
 import { GovernanceV3EthereumGovernanceABI } from "./abis/governance-v3-ethereum-governance";
 
-type AddressGasInfo = {
-  address: Address;
-  gasUsed: bigint;
-  cancellationFeesUsed: bigint;
+export const feesTypesNames = {
+  gasUsed: "Gas Used (ETH)",
+  cancellationFeesUsed: "Cancellation Fees Used (ETH)",
 };
 
-export type DelegatePlatformFees = {
-  name: string;
-  addresses: AddressGasInfo[];
+export enum FeesTypes {
+  gasUsed = "gasUsed",
+  cancellationFeesUsed = "cancellationFeesUsed",
+}
+
+export type FeesInfos = {
+  totalFees: bigint;
+  fees: {
+    [feetype in FeesTypes]: bigint;
+  };
 };
+
+export type AddressesFees = Map<Address, FeesInfos>; // address <-> FeesInfos
+
+export type DelegatePlatformFees = {
+  totalFeesInfos: FeesInfos;
+  addressesFees: AddressesFees;
+};
+
+export type AllDelegatePlatformsFees = Map<string, DelegatePlatformFees>; // name <-> DelegatePlatformFees
 
 const trackAddressesGas = async () => {
   requireEnv();
@@ -30,13 +45,10 @@ const trackAddressesGas = async () => {
   const startBlock = BigInt(process.env.START_BLOCK);
   const endBlock = BigInt(process.env.END_BLOCK);
 
-  const delegatePlatformsWithFees: DelegatePlatformFees[] = [];
+  const delegatePlatformsWithFees: AllDelegatePlatformsFees = new Map();
 
   for (const delegatePlatform of delegatePlatforms) {
-    delegatePlatformsWithFees.push({
-      name: delegatePlatform.name,
-      addresses: [],
-    });
+    const addressesFees = new Map<Address, FeesInfos>();
 
     for (const address of delegatePlatform.addresses) {
       const gas = await getAllGasUsed(address, startBlock, endBlock);
@@ -47,14 +59,43 @@ const trackAddressesGas = async () => {
         endBlock
       );
 
-      delegatePlatformsWithFees[
-        delegatePlatformsWithFees.length - 1
-      ].addresses.push({
-        address,
-        gasUsed: gas,
-        cancellationFeesUsed: cancellationFees,
+      const totalFees = gas + cancellationFees;
+
+      addressesFees.set(address, {
+        totalFees: totalFees,
+        fees: {
+          gasUsed: gas,
+          cancellationFeesUsed: cancellationFees,
+        },
       });
     }
+
+    const totalFeesInfos = Array.from(addressesFees.values()).reduce(
+      (acc, cur) => {
+        return {
+          totalFees: acc.totalFees + cur.totalFees,
+          fees: {
+            gasUsed: acc.fees.gasUsed + cur.fees.gasUsed,
+            cancellationFeesUsed:
+              acc.fees.cancellationFeesUsed + cur.fees.cancellationFeesUsed,
+          },
+        };
+      },
+      {
+        totalFees: 0n,
+        fees: {
+          gasUsed: 0n,
+          cancellationFeesUsed: 0n,
+        },
+      }
+    );
+
+    const delegatePlatformsFees: DelegatePlatformFees = {
+      totalFeesInfos: totalFeesInfos,
+      addressesFees: addressesFees,
+    };
+
+    delegatePlatformsWithFees.set(delegatePlatform.name, delegatePlatformsFees);
   }
 
   generateReport(delegatePlatformsWithFees);
