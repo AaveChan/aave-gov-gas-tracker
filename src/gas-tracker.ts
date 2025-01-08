@@ -137,6 +137,8 @@ const getAllPropositionCanceledFees = async (
   startBlock: bigint,
   endBlock: bigint
 ) => {
+  const cancellationFee = parseEther("0.05");
+
   const viemClient = getViemClient(mainnet);
 
   const proposalCreatedEvents = await fetchEventsInBatches(
@@ -171,8 +173,6 @@ const getAllPropositionCanceledFees = async (
   const allProposalsCanceledByAddress = allProposalCanceledEvents
     .map((event) => event.args.proposalId)
     .filter((id) => id && proposalIds.has(id));
-
-  const cancellationFee = parseEther("0.05");
 
   const totalCancellationFee =
     BigInt(allProposalsCanceledByAddress.length) * cancellationFee;
