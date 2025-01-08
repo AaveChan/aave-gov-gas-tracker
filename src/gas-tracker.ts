@@ -10,15 +10,15 @@ import { fetchEventsInBatches } from "./utils/events";
 import { GovernanceV3Ethereum } from "@bgd-labs/aave-address-book";
 import { GovernanceV3EthereumGovernanceABI } from "./abis/governance-v3-ethereum-governance";
 
-export const feesTypesNames = {
-  gasUsed: "Gas Used (ETH)",
-  cancellationFeesUsed: "Cancellation Fees Used (ETH)",
-};
-
 export enum FeesTypes {
-  gasUsed = "gasUsed",
-  cancellationFeesUsed = "cancellationFeesUsed",
+  allTxsGas = "allTxsGas",
+  proposalCanceledFees = "proposalCanceledFees",
 }
+
+export const feesTypesNames = {
+  [FeesTypes.allTxsGas]: "Gas Used (ETH)",
+  [FeesTypes.proposalCanceledFees]: "Cancellation Fees Used (ETH)",
+};
 
 export type FeesInfos = {
   totalFees: bigint;
@@ -51,21 +51,21 @@ const trackAddressesGas = async () => {
     const addressesFees = new Map<Address, FeesInfos>();
 
     for (const address of delegatePlatform.addresses) {
-      const gas = await getAllGasUsed(address, startBlock, endBlock);
+      const allTxsGas = await getAllGasUsed(address, startBlock, endBlock);
 
-      const cancellationFees = await getCancellationFees(
+      const proposalCanceledFees = await getCancellationFees(
         address,
         startBlock,
         endBlock
       );
 
-      const totalFees = gas + cancellationFees;
+      const totalFees = allTxsGas + proposalCanceledFees;
 
       addressesFees.set(address, {
         totalFees: totalFees,
         fees: {
-          gasUsed: gas,
-          cancellationFeesUsed: cancellationFees,
+          allTxsGas,
+          proposalCanceledFees,
         },
       });
     }
@@ -75,17 +75,17 @@ const trackAddressesGas = async () => {
         return {
           totalFees: acc.totalFees + cur.totalFees,
           fees: {
-            gasUsed: acc.fees.gasUsed + cur.fees.gasUsed,
-            cancellationFeesUsed:
-              acc.fees.cancellationFeesUsed + cur.fees.cancellationFeesUsed,
+            [FeesTypes.allTxsGas]: acc.fees.allTxsGas + cur.fees.allTxsGas,
+            [FeesTypes.proposalCanceledFees]:
+              acc.fees.proposalCanceledFees + cur.fees.proposalCanceledFees,
           },
         };
       },
       {
         totalFees: 0n,
         fees: {
-          gasUsed: 0n,
-          cancellationFeesUsed: 0n,
+          [FeesTypes.allTxsGas]: 0n,
+          [FeesTypes.proposalCanceledFees]: 0n,
         },
       }
     );
