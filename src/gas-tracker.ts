@@ -16,8 +16,8 @@ export enum FeesTypes {
 }
 
 export const feesTypesNames = {
-  [FeesTypes.allTxsGas]: "Gas Used (ETH)",
-  [FeesTypes.proposalCanceledFees]: "Cancellation Fees Used (ETH)",
+  [FeesTypes.allTxsGas]: "All txs gas spent (ETH)",
+  [FeesTypes.proposalCanceledFees]: "Proposal cancellation fees spent (ETH)",
 };
 
 export type FeesInfos = {
@@ -53,7 +53,7 @@ const trackAddressesGas = async () => {
     for (const address of delegatePlatform.addresses) {
       const allTxsGas = await getAllGasUsed(address, startBlock, endBlock);
 
-      const proposalCanceledFees = await getCancellationFees(
+      const proposalCanceledFees = await getAllPropositionCanceledFees(
         address,
         startBlock,
         endBlock
@@ -104,6 +104,8 @@ const trackAddressesGas = async () => {
 /**
  * Returns the total gas used by an address in wei
  * @param address
+ * @param startBlock
+ * @param endBlock
  * @returns
  */
 const getAllGasUsed = async (
@@ -124,7 +126,15 @@ const getAllGasUsed = async (
   return totalGasUsed;
 };
 
-const getCancellationFees = async (
+/**
+ * Returns the total cancellation fees used by an address in wei
+ * More info: https://governance.aave.com/t/bgd-aave-governance-v3-activation-plan/14993#cancellation-fee-10
+ * @param address
+ * @param startBlock
+ * @param endBlock
+ * @returns
+ */
+const getAllPropositionCanceledFees = async (
   address: Address,
   startBlock: bigint,
   endBlock: bigint
