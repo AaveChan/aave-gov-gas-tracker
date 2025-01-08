@@ -27,11 +27,9 @@ export type FeesInfos = {
   };
 };
 
-export type AddressesFees = Map<Address, FeesInfos>; // address <-> FeesInfos
-
 export type DelegatePlatformFees = {
   totalFeesInfos: FeesInfos;
-  addressesFees: AddressesFees;
+  addressesFees: Map<Address, FeesInfos>; // address <-> FeesInfos
 };
 
 export type AllDelegatePlatformsFees = Map<string, DelegatePlatformFees>; // name <-> DelegatePlatformFees
