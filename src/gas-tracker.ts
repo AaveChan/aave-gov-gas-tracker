@@ -141,12 +141,12 @@ const getAllPropositionCanceledFees = async (
 
   const viemClient = getViemClient(mainnet);
 
-  const proposalCreatedEvents = await fetchEventsInBatches(
+  const allProposalCreatedEvents = await fetchEventsInBatches(
     {
       address: GovernanceV3Ethereum.GOVERNANCE,
       abi: GovernanceV3EthereumGovernanceABI,
       eventName: "ProposalCreated",
-      fromBlock: startBlock,
+      fromBlock: 18119225n, // contract deployment block
       toBlock: endBlock,
       args: {
         creator: address,
@@ -155,12 +155,12 @@ const getAllPropositionCanceledFees = async (
     viemClient
   );
   const proposalIds = new Set(
-    proposalCreatedEvents
+    allProposalCreatedEvents
       .map((event) => event.args.proposalId)
       .filter((id) => id !== undefined)
   );
 
-  const allProposalCanceledEvents = await fetchEventsInBatches(
+  const proposalCanceledEvents = await fetchEventsInBatches(
     {
       address: GovernanceV3Ethereum.GOVERNANCE,
       abi: GovernanceV3EthereumGovernanceABI,
@@ -170,15 +170,15 @@ const getAllPropositionCanceledFees = async (
     },
     viemClient
   );
-  const allProposalsCanceledByAddress = allProposalCanceledEvents
+  const proposalsCanceledByAddress = proposalCanceledEvents
     .map((event) => event.args.proposalId)
     .filter((id) => id && proposalIds.has(id));
 
   const totalCancellationFee =
-    BigInt(allProposalsCanceledByAddress.length) * cancellationFee;
+    BigInt(proposalsCanceledByAddress.length) * cancellationFee;
 
   console.log(
-    `🔍 Found ${allProposalsCanceledByAddress.length} proposals canceled for ${address}`
+    `🔍 Found ${proposalsCanceledByAddress.length} proposals canceled for ${address}`
   );
 
   return totalCancellationFee;
