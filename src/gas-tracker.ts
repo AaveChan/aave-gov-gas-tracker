@@ -20,11 +20,13 @@ export const feesTypesNames = {
   [FeesTypes.proposalCanceledFees]: "Proposal cancellation fees spent (ETH)",
 };
 
+type Fees = {
+  [feetype in FeesTypes]: bigint;
+};
+
 export type FeesInfos = {
   totalFees: bigint;
-  fees: {
-    [feetype in FeesTypes]: bigint;
-  };
+  fees: Fees;
 };
 
 export type DelegatePlatformFees = {
@@ -57,34 +59,38 @@ const trackAddressesGas = async () => {
         endBlock
       );
 
-      const totalFees = allTxsGas + proposalCanceledFees;
+      const fees: Fees = {
+        [FeesTypes.allTxsGas]: allTxsGas,
+        [FeesTypes.proposalCanceledFees]: proposalCanceledFees,
+      };
 
-      addressesFees.set(address, {
-        totalFees: totalFees,
+      const feesInfos: FeesInfos = {
+        totalFees: Object.values(fees).reduce((acc, cur) => acc + cur, 0n),
         fees: {
-          allTxsGas,
-          proposalCanceledFees,
+          ...fees,
         },
-      });
+      };
+
+      addressesFees.set(address, feesInfos);
     }
 
     const totalFeesInfos = Array.from(addressesFees.values()).reduce(
-      (acc, cur) => {
+      (acc: FeesInfos, cur: FeesInfos) => {
+        const updatedFees: Fees = { ...acc.fees };
+        for (const feeType of Object.values(FeesTypes)) {
+          updatedFees[feeType] =
+            (updatedFees[feeType] || 0n) + cur.fees[feeType];
+        }
         return {
           totalFees: acc.totalFees + cur.totalFees,
-          fees: {
-            [FeesTypes.allTxsGas]: acc.fees.allTxsGas + cur.fees.allTxsGas,
-            [FeesTypes.proposalCanceledFees]:
-              acc.fees.proposalCanceledFees + cur.fees.proposalCanceledFees,
-          },
+          fees: updatedFees,
         };
       },
       {
         totalFees: 0n,
-        fees: {
-          [FeesTypes.allTxsGas]: 0n,
-          [FeesTypes.proposalCanceledFees]: 0n,
-        },
+        fees: Object.fromEntries(
+          Object.values(FeesTypes).map((feeType) => [feeType, 0n])
+        ) as Fees,
       }
     );
 
