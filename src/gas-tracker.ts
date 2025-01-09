@@ -1,6 +1,6 @@
 import "dotenv/config";
 import { etherscanProvider } from "./clients/ethers-client";
-import { Address, parseEther } from "viem";
+import { Address } from "viem";
 import { delegatePlatforms } from "./configs/config";
 import { requireEnv } from "./utils/requires";
 import { generateReport } from "./services/report";
@@ -137,9 +137,13 @@ const getAllPropositionCanceledFees = async (
   startBlock: bigint,
   endBlock: bigint
 ) => {
-  const cancellationFee = parseEther("0.05");
-
   const viemClient = getViemClient(mainnet);
+
+  const cancellationFee = await viemClient.readContract({
+    address: GovernanceV3Ethereum.GOVERNANCE,
+    abi: GovernanceV3EthereumGovernanceABI,
+    functionName: "getCancellationFee",
+  });
 
   // 2 access of controll: https://etherscan.io/address/0x58bcb647c4beff253b4b6996c62f737b783f2cdd#code#F18#L10
   // Level_1 & Level_2
