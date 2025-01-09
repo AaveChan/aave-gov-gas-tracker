@@ -141,12 +141,39 @@ const getAllPropositionCanceledFees = async (
 
   const viemClient = getViemClient(mainnet);
 
+  // 2 access of controll: https://etherscan.io/address/0x58bcb647c4beff253b4b6996c62f737b783f2cdd#code#F18#L10
+  // Level_1 & Level_2
+  const votingConfigLevels = await viemClient.multicall({
+    contracts: [
+      {
+        address: GovernanceV3Ethereum.GOVERNANCE,
+        abi: GovernanceV3EthereumGovernanceABI,
+        functionName: "getVotingConfig",
+        args: [1],
+      },
+      {
+        address: GovernanceV3Ethereum.GOVERNANCE,
+        abi: GovernanceV3EthereumGovernanceABI,
+        functionName: "getVotingConfig",
+        args: [2],
+      },
+    ],
+  });
+  // get the max voting delay
+  const maxVotingDelay = Math.max(
+    votingConfigLevels[0].result?.votingDuration ?? 0,
+    votingConfigLevels[1].result?.votingDuration ?? 0
+  );
+
+  // A proposal can be only canceled if it's strictly between the Null and Executed state (so only in Created, Active and Queued states)
+  // See states here: https://etherscan.io/address/0x58bcb647c4beff253b4b6996c62f737b783f2cdd#code#F10#L75
+  // So we only need to fetch the proposal that happened maxVotingDelay before the startBlock and until the endBlock
   const allProposalCreatedEvents = await fetchEventsInBatches(
     {
       address: GovernanceV3Ethereum.GOVERNANCE,
       abi: GovernanceV3EthereumGovernanceABI,
       eventName: "ProposalCreated",
-      fromBlock: 18119225n, // contract deployment block
+      fromBlock: startBlock - BigInt(maxVotingDelay),
       toBlock: endBlock,
       args: {
         creator: address,
