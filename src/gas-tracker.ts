@@ -170,25 +170,40 @@ const getAllPropositionCanceledFees = async (
     ],
   });
 
+  const COOLDOWN_PERIOD = await viemClient.readContract({
+    address: GovernanceV3Ethereum.GOVERNANCE,
+    abi: GovernanceV3EthereumGovernanceABI,
+    functionName: "COOLDOWN_PERIOD",
+  });
+
   if (!votingConfigLevels[0].result || !votingConfigLevels[1].result) {
     throw new Error("Could not fetch voting configs");
   }
 
-  // get the max voting delay
-  const maxVotingDelay = Math.max(
-    votingConfigLevels[0].result.votingDuration,
-    votingConfigLevels[1].result.votingDuration
-  );
+  // Created: cooldown before voting start
   const maxCoolDownBeforeVotingStart = Math.max(
     votingConfigLevels[0].result.coolDownBeforeVotingStart,
     votingConfigLevels[1].result.coolDownBeforeVotingStart
   );
+
+  // Active: voting period
+  const maxVotingDelay = Math.max(
+    votingConfigLevels[0].result.votingDuration,
+    votingConfigLevels[1].result.votingDuration
+  );
+
+  // Queued: grace period
+  // block.timestamp >= proposal.queuingTime + COOLDOWN_PERIOD => queuingTime correponds to proposal creation block.timestamp
+  // source : https://etherscan.io/address/0x58bcb647c4beff253b4b6996c62f737b783f2cdd#code#F3#L403
+  const maxGracePeriod = Number(COOLDOWN_PERIOD);
+
+  // buffer to ensure we fetch all proposals
   const buffer = 60 * 60 * 24 * 7; // 1 week in seconds
 
   const secondsPerBlock = 12; // ethereum mainnet
 
   const totalProposalLifetime =
-    maxVotingDelay + maxCoolDownBeforeVotingStart + buffer;
+    maxCoolDownBeforeVotingStart + maxVotingDelay + maxGracePeriod + buffer;
   const totalProposalLifetimeInBlocks = totalProposalLifetime / secondsPerBlock;
 
   // A proposal can be only canceled if it's strictly between the Null and Executed state (so only in Created, Active and Queued states)
