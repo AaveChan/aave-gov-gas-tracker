@@ -1,5 +1,4 @@
-import { Network } from "ethers";
-import { EtherscanProvider, Networkish, BlockTag } from "ethers"; //^v6
+import { BlockTag } from "ethers"; //^v6
 import { Address } from "viem";
 
 type GetHistoryReturn = {
@@ -25,11 +24,21 @@ type GetHistoryReturn = {
   isError: string; // number
 };
 
-// no getHistory in ethers v6
-// go from https://ethereum.stackexchange.com/a/150836
-export default class EtherscanProviderImproved extends EtherscanProvider {
-  constructor(networkish: Networkish, apiKey?: string) {
-    super(networkish, apiKey);
+type EtherscanV2Response<T> = {
+  status: string;
+  message: string;
+  result: T;
+};
+
+const ETHERSCAN_V2_BASE_URL = "https://api.etherscan.io/v2/api";
+
+export default class EtherscanProviderImproved {
+  private readonly apiKey?: string;
+  private readonly chainId: number;
+
+  constructor(chainId: number, apiKey?: string) {
+    this.chainId = chainId;
+    this.apiKey = apiKey;
   }
 
   async getHistory(
@@ -37,19 +46,41 @@ export default class EtherscanProviderImproved extends EtherscanProvider {
     startBlock?: BlockTag,
     endBlock?: BlockTag
   ): Promise<Array<GetHistoryReturn>> {
-    const params = {
+    const params = new URLSearchParams({
+      chainid: String(this.chainId),
+      module: "account",
       action: "txlist",
       address,
-      startblock: startBlock == null ? 0 : startBlock,
-      endblock: endBlock == null ? 99999999 : endBlock,
+      startblock: startBlock == null ? "0" : String(startBlock),
+      endblock: endBlock == null ? "99999999" : String(endBlock),
       sort: "asc",
-    };
+    });
+    if (this.apiKey) {
+      params.set("apikey", this.apiKey);
+    }
 
-    return this.fetch("account", params);
+    const response = await fetch(`${ETHERSCAN_V2_BASE_URL}?${params.toString()}`);
+    if (!response.ok) {
+      throw new Error(
+        `Etherscan v2 request failed: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const json = (await response.json()) as EtherscanV2Response<
+      Array<GetHistoryReturn>
+    >;
+    if (json.status === "1" && Array.isArray(json.result)) {
+      return json.result;
+    }
+    if (json.message?.toLowerCase().includes("no transactions")) {
+      return [];
+    }
+
+    throw new Error(`Etherscan v2 error: ${json.message ?? "unknown"}`);
   }
 }
 
 export const etherscanProvider = new EtherscanProviderImproved(
-  new Network("mainnet", 1),
+  1,
   process.env.ETHERSCAN_API_KEY
 );

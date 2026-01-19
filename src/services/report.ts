@@ -12,7 +12,7 @@ export const generateReport = (
 ) => {
   const startBlock = process.env.START_BLOCK;
   const endBlock = process.env.END_BLOCK;
-  let report = `# Delegate Platforms Gas Report\n\n`;
+  let report = `# ACI Gas Report\n\n`;
   report += `### 🏁 From [${startBlock}](https://etherscan.io/block/${startBlock}) to [${endBlock}](https://etherscan.io/block/${endBlock})\n\n`;
 
   for (const [
